@@ -1,0 +1,96 @@
+{
+  "name": "MIS303 Harness",
+  "version": "1.0",
+  "language": "zh-CN",
+  "task_scope": "每次从单独提供的题目图片建立研究问题，不迁移旧案例情景",
+  "source_priority": [
+    "用户最新明确要求及当次题目修订",
+    "用户最终文字评分规则",
+    "当次题目图片及 Rubric V9 中没有冲突的细则",
+    "MIS303 格式模板中的格式要求"
+  ],
+  "time": {
+    "unit": "minutes",
+    "scope": "当次处理题目至报告与 PPT 完成最终检查及导出",
+    "target_budget": 165,
+    "rules": [
+      {
+        "operator": ">",
+        "threshold": 600,
+        "classification": "failure",
+        "score": {"operator": "<", "value": 60}
+      },
+      {
+        "operator": "<",
+        "threshold": 180,
+        "classification": "above average+ or higher",
+        "score": {"operator": ">=", "value": 90}
+      }
+    ],
+    "unresolved": [
+      "恰好 180 分钟",
+      "180 至 600 分钟之间的时间评分",
+      "恰好 600 分钟",
+      "外部等待是否从老师采用的总时间中扣除"
+    ]
+  },
+  "prompt_design": {
+    "teacher_prompt_only": {"score": 60, "classification": "average"},
+    "effective_student_addition": {"bonus_operator": ">=", "bonus_value": 20},
+    "best_practice": {
+      "bonus_max": 30,
+      "decision_by": "老师与 TA",
+      "automatic_award": false
+    }
+  },
+  "unresolved_scoring": [
+    "时间评分与提示词评分同时成立时如何合并",
+    "新增设计加分和最佳实践加分是否累计",
+    "总分上限",
+    "旧版检测附录奖励与最终文字奖励的关系"
+  ],
+  "quality_details": {
+    "revision_rounds_min": 2,
+    "management_insights_range_when_applicable": [2, 5],
+    "prompt_design_lessons_range": [1, 3],
+    "citation_style": "APA 7",
+    "framework_selection": "原题指定时遵循；其他情况按当次问题选择，不预设命名理论",
+    "human_participation": "只记录真实发生的阅读反馈、讨论与评审"
+  },
+  "rubric_v9_supplement": {
+    "use": "保留图片中的质量细则，不与最终文字规则擅自合并成总分",
+    "prompt_design_attitude_percent": 10,
+    "reflection_subitem_percent": 7,
+    "cognitive_level_percent": 25,
+    "reading_and_understanding_subitem_percent": 10,
+    "business_fit_subitem_percent": 5,
+    "relevant_material_selection_subitem_percent": 10,
+    "prompt_design_quality_percent": 50,
+    "class_or_wechat_discussion_subitem_percent": 20,
+    "PIS_analysis_subitem_percent_when_applicable": 10,
+    "management_insights_subitem_percent": 6,
+    "understandability_and_visuals_subitem_percent": 7,
+    "prompt_design_lessons_subitem_percent": 7,
+    "report_quality_and_format_percent": 15,
+    "framework_definition": "PIS 定义以课程材料为准，不自行补造",
+    "human_items": "阅读理解、课堂或微信群交流须有真实参与记录，AI 不自动认定"
+  },
+  "output_style": {
+    "voice": "自然的课程研究与商业分析语言",
+    "avoid_in_body_and_slides": [
+      "证据",
+      "验收",
+      "尚未",
+      "哈希",
+      "交付物清单",
+      "审计轨迹",
+      "可追溯链",
+      "版本指纹",
+      "证据链",
+      "已通过全部检查"
+    ],
+    "exceptions": "题目原文、准确的文献标题和必须讨论的专业概念按原意保留",
+    "preserve": "必要的条件、实质局限和真实的不确定性，不以删词改变事实含义"
+  },
+  "automatic_final_score": false
+}

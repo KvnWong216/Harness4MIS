@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIS303 作业助手</title>
+<style>
+:root{--ink:#192b38;--muted:#6d7b85;--line:#dce3e7;--paper:#fff;--green:#176b54;--bg:#f4f6f5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}header{border-bottom:1px solid var(--line);background:#fff;padding:25px max(28px,calc((100vw - 1260px)/2));display:flex;justify-content:space-between;align-items:center}h1{font-size:23px;margin:0;letter-spacing:-.5px}header span{font-size:13px;color:var(--muted)}main{max-width:1260px;margin:32px auto;padding:0 26px;display:grid;grid-template-columns:430px 1fr;gap:28px}.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:26px;margin-bottom:22px}h2{font-size:19px;margin:0 0 17px}h3{font-size:15px;margin:21px 0 8px}.intro{font-size:14px;color:var(--muted);margin:0 0 22px}.field{margin:16px 0}label{display:block;font-size:14px;margin-bottom:7px}input,textarea,select{font:inherit;color:inherit;width:100%;padding:10px 12px;border:1px solid #cad4da;border-radius:6px;background:white}input[type=file]{padding:14px;border:1px dashed #b6c8bd;background:#f8fbf8;font-size:12px}input[type=checkbox]{width:auto}textarea{resize:vertical;min-height:84px}button,.download{cursor:pointer;display:inline-block;border:0;border-radius:6px;padding:12px 18px;background:var(--green);color:white;font:inherit;text-decoration:none}button:disabled{opacity:.5;cursor:wait}.secondary{background:#eef2f1;color:var(--ink)}.primary{width:100%;margin-top:18px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.small{font-size:12px;color:var(--muted)}details{border-top:1px solid var(--line);padding:15px 0 0;margin-top:20px}summary{cursor:pointer;font-size:14px}.empty{padding:70px 20px;color:var(--muted);text-align:center}.empty strong{display:block;font-size:20px;color:var(--ink);margin-bottom:10px}.status{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}.status strong{font-size:18px}#timer{font-size:25px;font-variant-numeric:tabular-nums;white-space:nowrap}.stagebar{height:5px;background:#e9efeb;border-radius:5px;margin:20px 0;overflow:hidden}.stagebar div{height:100%;background:var(--green);transition:width .3s}.steps{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}.statement{white-space:pre-wrap;background:#f8faf9;padding:18px;border-radius:6px;overflow-wrap:anywhere;max-height:430px;overflow:auto;font-size:14px}.events{list-style:none;padding:0;margin:10px 0}.events li{padding:8px 0;border-bottom:1px solid #edf1ee;font-size:13px}.events time{color:var(--muted);margin-right:12px}.notice{padding:14px;background:#fff5df;border-radius:6px;margin:14px 0}.downloads{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.download{font-size:14px;padding:10px 14px}.old{display:block;width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--line);text-align:left;border-radius:0;background:white;color:var(--ink)}.old span{display:block;color:var(--muted);font-size:12px}.error{color:#a2382d;font-size:13px;margin-top:12px}.files{font-size:12px;color:var(--muted);white-space:pre-line;margin-top:8px}#work{display:none}#resumeBox{display:none}.row{display:flex;gap:10px;align-items:center}a{color:var(--green)}[hidden]{display:none!important}@media(max-width:900px){main{grid-template-columns:1fr;padding:0 16px;margin-top:20px}header{padding:20px}header span{display:none}.panel{padding:21px}}
+</style>
+</head>
+<body>
+<header><h1>MIS303 作业助手</h1><span>从题目图片开始，逐题完成报告与 PPT</span></header>
+<main>
+<section>
+<form id="newForm" class="panel">
+<h2>开始一份作业</h2><p class="intro">上传当次题目和相关材料。工具会先完整呈现 Problem Statement，再逐题作答并完成两轮修订。</p>
+<div class="field"><label for="questions">题目图片 · 按阅读顺序选择</label><input id="questions" type="file" multiple accept=".png,.jpg,.jpeg,.webp" required><div id="questionNames" class="files"></div></div>
+<div class="field"><label for="materials">相关材料</label><input id="materials" type="file" multiple accept=".docx,.pdf,.xlsx,.txt,.md,.csv,.tsv,.png,.jpg,.jpeg,.webp"><div class="small">Word、PDF、Excel、文本及图片，总量不超过 40 MB</div><div id="materialNames" class="files"></div></div>
+<div class="two"><div><label for="name">姓名</label><input id="name" autocomplete="name"></div><div><label for="student_number">学号</label><input id="student_number"></div></div>
+<div class="two field"><div><label for="assignment">作业编号</label><input id="assignment" placeholder="如 1"></div><div><label for="part">Part 编号</label><input id="part" placeholder="如 1-5"></div></div>
+<details><summary>补充要求与课程格式</summary>
+<div class="field"><label for="teacher_prompt">老师原始提示词</label><textarea id="teacher_prompt"></textarea></div>
+<div class="field"><label for="student_ideas">你的初始想法</label><textarea id="student_ideas"></textarea></div>
+<div class="field"><label for="student_additions">你新增的提示词或规则</label><textarea id="student_additions"></textarea></div>
+<div class="field"><label for="instructions">其他要求</label><textarea id="instructions" placeholder="如报告语言、汇报时长或需要重点讨论的问题"></textarea></div>
+<div class="field"><label for="template">Word 格式模板</label><input type="file" id="template" accept=".docx"></div>
+<div class="two"><div><label for="word_min">正文最少字数</label><input id="word_min" type="number" min="0" placeholder="按原题"></div><div><label for="word_max">正文最多字数</label><input id="word_max" type="number" min="0" placeholder="按原题"></div></div>
+<div class="field"><label for="slide_count">PPT 总页数</label><input id="slide_count" type="number" min="0" placeholder="按原题，包含封面与题目页"></div>
+</details>
+<details><summary>模型连接</summary>
+<div class="field"><label for="provider">连接方式</label><select id="provider"><option value="codex">本机 Codex 登录</option><option value="api">OpenAI Responses API</option></select></div>
+<div class="field"><label for="model">模型名称</label><input id="model" placeholder="Codex 留空使用默认模型"></div>
+<div id="apiFields" hidden><div class="field"><label for="api_base">API 地址</label><input id="api_base" value="https://api.openai.com/v1"></div><div class="field"><label for="api_key">API 密钥</label><input id="api_key" type="password" autocomplete="off"><div class="small">密钥只在本次服务内存中使用。</div></div></div>
+<label class="field"><input id="web_search" type="checkbox"> 允许查阅外部来源</label>
+</details>
+<button class="primary" type="submit" id="startButton">开始作业</button><div id="formError" class="error" role="alert"></div>
+</form>
+<div class="panel"><h2>最近作业</h2><div id="history" class="small">正在读取…</div></div>
+</section>
+<section>
+<div id="empty" class="panel empty"><strong>每次从新题目开始</strong>保留原题，逐项回答。<br>报告与 PPT 共用修订后的内容。</div>
+<div id="work" class="panel">
+<div class="status"><div><strong id="stage"></strong><div class="small" id="count"></div></div><div id="timer">00:00</div></div>
+<div class="stagebar"><div id="progress" style="width:0"></div></div>
+<div class="steps"><span>题目转录</span><span>逐题作答</span><span>第一轮修订</span><span>第二轮修订</span><span>报告与 PPT</span></div>
+<div id="notice" class="notice" hidden></div>
+<h3>Problem Statement</h3><div id="statement" class="statement">正在读取题目图片…</div>
+<div id="resumeBox"><h3>补充后继续</h3><label for="correctedStatement">题目转录 · 仅在需要修正时修改</label><textarea id="correctedStatement" rows="6"></textarea><div class="field"><label for="feedback">补充说明</label><textarea id="feedback"></textarea></div><div class="field"><label for="extraMaterials">补充材料</label><input id="extraMaterials" type="file" multiple accept=".docx,.pdf,.xlsx,.txt,.md,.csv,.tsv,.png,.jpg,.jpeg,.webp"></div><button id="resume" type="button">继续完成</button></div>
+<div class="downloads" id="downloads"></div>
+<div class="row" style="margin-top:18px"><button class="secondary" id="pause" type="button">暂停</button><button class="secondary" id="retry" type="button" hidden>从保存处继续</button></div>
+<h3>当前进展</h3><ul id="events" class="events"></ul>
+<div class="small" id="timeNote"></div>
+</div>
+</section>
+</main>
+<script>
+let token='', current=null, snapshot=null, fetched=0, busy=false;
+const $=id=>document.getElementById(id);
+function duration(seconds){seconds=Math.max(0,Math.floor(seconds));const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return(h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+async function api(path,body){const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Harness-Token':token},body:JSON.stringify(body)});const v=await r.json();if(!r.ok)throw Error(v.error||'请求未完成');return v;}
+function readFile(file,role){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve({name:file.name,role,data:r.result.split(',')[1]});r.onerror=reject;r.readAsDataURL(file);});}
+async function uploads(input,role){return Promise.all([...$(input).files].map(f=>readFile(f,role)));}
+function text(el,value){$(el).textContent=value||'';}
+function render(s){snapshot=s;fetched=Date.now();$('empty').hidden=true;$('work').style.display='block';text('stage',s.stage);text('count',s.questions?.length?`${s.answered} / ${s.questions.length} 题完成`:'');text('statement',s.problem_statement||'正在读取题目图片…');text('timer',duration(s.elapsed_seconds));let p=s.status==='completed'?100:s.problem_statement?15+65*s.answered/Math.max(1,s.questions?.length||1):5;$('progress').style.width=p+'%';
+const stopped=['needs_input','paused','error'].includes(s.status);$('resumeBox').style.display=stopped?'block':'none';if(document.activeElement!==$('correctedStatement')&&!$('correctedStatement').dataset.edited)$('correctedStatement').value=s.problem_statement||'';$('pause').hidden=!['running','queued'].includes(s.status);$('retry').hidden=!['paused','error'].includes(s.status);const notice=s.error||(s.questions_for_user||[]).join('\n');$('notice').hidden=!notice;text('notice',notice);$('notice').style.whiteSpace='pre-wrap';
+$('downloads').replaceChildren();for(const [key,name] of Object.entries(s.outputs||{})){const a=document.createElement('a');a.className='download';a.href='/download/runs/'+s.id+'/'+encodeURIComponent(name);a.download=name;a.textContent=({report:'Word 报告',appendix:'报告附件',presentation:'PPT',transcripts:'完整对话',timing:'时间记录'})[key]||name;$('downloads').append(a);}
+$('events').replaceChildren();for(const e of(s.events||[]).slice(-10).reverse()){const li=document.createElement('li'),t=document.createElement('time');t.textContent=new Date(e.at).toLocaleTimeString('zh-CN');li.append(t,document.createTextNode(e.text));$('events').append(li);}text('timeNote',s.status==='completed'?'总计时包含处理与等待时间；人工投入需另行记录。':'时间从本次开始处理题目起算，包含等待与暂停。');}
+async function history(){const list=await api('/api/runs');$('history').replaceChildren();if(!list.length){text('history','完成的作业会保存在这里。');return;}for(const s of list){const b=document.createElement('button');b.type='button';b.className='old';const title=document.createTextNode((s.metadata.name||'作业')+' · '+(s.metadata.assignment||'未编号'));const small=document.createElement('span');small.textContent=new Date(s.started_at).toLocaleString('zh-CN')+' · '+s.stage;b.append(title,small);b.onclick=()=>{current=s.id;$('correctedStatement').dataset.edited='';render(s);};$('history').append(b);}}
+$('newForm').onsubmit=async e=>{e.preventDefault();$('startButton').disabled=true;text('formError','');try{const files=[...await uploads('questions','question'),...await uploads('materials','material'),...await uploads('template','template')];const metadata={};for(const k of['name','student_number','assignment','part','teacher_prompt','student_ideas','student_additions','instructions','word_min','word_max','slide_count'])metadata[k]=$(k).value;const config={provider:$('provider').value,model:$('model').value,api_base:$('api_base').value,api_key:$('api_key').value,web_search:$('web_search').checked};const s=await api('/api/runs',{files,metadata,config});current=s.id;$('correctedStatement').dataset.edited='';render(s);await history();}catch(e){text('formError',e.message);}finally{$('startButton').disabled=false;}};
+$('provider').onchange=()=>{$('apiFields').hidden=$('provider').value!=='api';};
+$('correctedStatement').oninput=()=>{$('correctedStatement').dataset.edited='yes';};
+async function resume(withChanges){if(!current)return;try{const data=withChanges?{feedback:$('feedback').value,statement:$('correctedStatement').value,files:await uploads('extraMaterials','material'),api_key:$('api_key').value}:{};render(await api('/api/runs/'+current+'/resume',data));$('feedback').value='';$('extraMaterials').value='';$('correctedStatement').dataset.edited='';}catch(e){text('notice',e.message);$('notice').hidden=false;}}
+$('resume').onclick=()=>resume(true);$('retry').onclick=()=>resume(false);$('pause').onclick=async()=>{if(current)await api('/api/runs/'+current+'/pause',{});};
+for(const [id,target]of[['questions','questionNames'],['materials','materialNames']])$(id).onchange=()=>text(target,[...$(id).files].map((f,i)=>`${i+1}. ${f.name}`).join('\n'));
+setInterval(async()=>{if(!current||busy)return;busy=true;try{render(await api('/api/runs/'+current));}catch(e){text('stage',e.message);}finally{busy=false;}},2200);
+setInterval(()=>{if(snapshot&&snapshot.status!=='completed')text('timer',duration(snapshot.elapsed_seconds+(Date.now()-fetched)/1000));},1000);
+(async()=>{try{const c=await api('/api/config');token=c.token;await history();}catch(e){text('formError',e.message);}})();
+</script>
+</body>
+</html>
