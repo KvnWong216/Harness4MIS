@@ -69,7 +69,8 @@ await finalizePresentation({workspaceDir:path.resolve(path.dirname(build)),candi
   pythonExecutable:python,
   integrityValidatorPath:path.join(skill,'container_tools/inspect_presentation_package_integrity.py'),
   layoutValidatorPath:path.join(skill,'container_tools/inspect_presentation_layout_geometry.py'),
-  layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit'],
+  layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit',
+    ...tableOwners.flatMap(number=>['--require-native-table-slide',String(number)])],
   explicitTotalSlideCount:data.length,requiredNativeTableOwnerSlides:tableOwners,
   fontPolicy:{basis:'design',families:[font]},verifyArtifactToolImport:true,
   receiptPath:path.join(build,'presentation-check-'+stamp+'.json')});

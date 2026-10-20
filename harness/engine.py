@@ -93,6 +93,16 @@ class Runner:
             '如果提供用户修订后的题目文本，以此拆题并保留原图片转录的历史记录。',
             schemas.OCR, {'user_statement': override}, images=[] if override else
             [self.path / f['path'] for f in self.state['files'] if f['role'] == 'question'])
+        from .word_format import select_part
+        full = result['problem_statement']
+        selected = select_part(full, self.state['metadata'].get('part', ''))
+        if selected != full:
+            write_json(self.path / 'full_transcription.json', result)
+            result = self.call('transcription-selected-part',
+                '仅按选中的 Part 文本拆分原题，保留完整要求和原编号，不包含其他 Part。',
+                schemas.OCR, {'selected_statement': selected})
+            if norm(result['problem_statement']) != norm(selected):
+                raise RuntimeError('所选 Part 的要求转录发生变化，请修正转录后继续。')
         for attempt in range(2):
             mismatches = [q for q in result['questions'] if not q['text'].strip() or
                           norm(q['text']) not in norm(result['problem_statement'])]
@@ -128,11 +138,22 @@ class Runner:
         context = {'question': question, 'answer_to_review': old,
                    'source_passages': chunks, 'previous_checks': check_answer(old, question, chunks, self.web,
                                                        self.config.get('web_search', False))}
-        instruction = ('执行第一轮实质修订：逐项比对原题，检查漏答、事实、命名理论的出处和适用性、'
+        previous = self.state['steps'].get('revision1-' + self.safe_id(question), {}) if round_number == 2 else {}
+        context['previous_changes'] = previous.get('changes', [])
+        plan = self.step(f'review-plan-{round_number}-'+self.safe_id(question),
+            '重新阅读 '+question['id'] if round_number == 1 else '结合修改继续阅读 '+question['id'],
+            lambda: self.call(f'{self.safe_id(question)}-review-plan-{round_number}',
+                '阅读当前原稿，找出最值得改进的具体段落或观点。先解释为什么值得调整，再写用于修改该处的提示词。'
+                '依据当前文本自主选择重点；结合已有修改继续深入，避免重复已解决的问题。'
+                '自然描述研究者如何改善语言、资料和观点；以AI辅助建议的身份记录。没有实质问题可返回空 directions。',
+                schemas.REVIEW_PLAN, context))
+        context['review_plan'] = plan
+        instruction = ('重新审视原稿：逐项比对原题：逐项比对原题，检查漏答、事实、命名理论的出处和适用性、'
             '来源与论断是否匹配、计算与逻辑。' if round_number == 1 else
-            '执行第二轮实质修订：重新阅读本题，改善直接回答、解释机制、图表、可读性和行动建议，'
+            '结合已有修改继续完善：重新阅读本题，改善直接回答、解释机制、图表、可读性和行动建议，'
             '删除工程交接措辞及无用理论，不损失分析条件。')
-        instruction += ('返回完整修订后的 answer，changes 只记录实际发生的修改；没有修改时如实说明。'
+        instruction += ('优先落实刚才阅读所得的具体调整提示词，说明改动与阅读判断的联系。'
+            '返回完整修订后的 answer，changes 只记录实际发生的修改；没有修改时如实说明。'
             '程序会粘贴原题，paragraphs 不要再抄题。题目给定条件直接作为前提，算式不需要额外引用。'
             '所有重要事实与理论列入 claims，推导注明前提。references 的 excerpt 必须逐字摘自实际来源，'
             'source_id 必须取自本次 source_passages，外部来源填写真实 URL 与实际原文。'
@@ -142,6 +163,7 @@ class Runner:
                            context, search=self.config.get('web_search', False))
         if result['blockers']:
             self.need(result['blockers'])
+        result['review_plan'] = plan
         write_json(self.path / f'revision-{round_number}-{self.safe_id(question)}.json', result)
         return result
 
@@ -205,11 +227,11 @@ class Runner:
                         '从网页研究获取的外部来源给出真实 URL 和原文，不使用编造的来源。'
                         '不要在正文写制作过程或内部记录。按全题字数要求合理分配本题篇幅。', schemas.ANSWER,
                         {'question': q, 'all_questions': ocr['questions'], 'requirements': ocr,
-                         'source_passages': s, 'teacher_prompt': self.state['metadata'].get('teacher_prompt', '')},
+                         'preceding_answers': list(answers), 'source_passages': s, 'teacher_prompt': self.state['metadata'].get('teacher_prompt', '')},
                         search=self.config.get('web_search', False)))
-                first = self.step('revision1-' + qid, '第一轮修订 ' + question['id'],
+                first = self.step('revision1-' + qid, '重新审视原稿 ' + question['id'],
                                   lambda: self.revised(question, selected, draft, 1))
-                second = self.step('revision2-' + qid, '第二轮修订 ' + question['id'],
+                second = self.step('revision2-' + qid, '继续完善分析 ' + question['id'],
                                    lambda: self.revised(question, selected, first['answer'], 2))
                 answer = self.step('final-' + qid, '核对修改结果 ' + question['id'],
                                    lambda: self.finish_answer(question, selected, second['answer']))

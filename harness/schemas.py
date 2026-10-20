@@ -21,6 +21,7 @@ CLAIM = obj(text=S, kind={'type': 'string', 'enum': ['fact', 'theory', 'inferenc
             reference_ids=array(S), rationale=S)
 ANSWER = obj(question_id=S, answer=S, paragraphs=array(S), tables=array(TABLE),
              references=array(REFERENCE), claims=array(CLAIM))
+REVIEW_PLAN = obj(directions=array(obj(focus=S, reason=S, prompt=S)))
 REVISION = obj(answer=ANSWER, changes=array(obj(issue=S, change=S)), blockers=array(S))
 OVERVIEW = obj(title=S, summary=S, methods=S, lessons=array(S))
 SLIDE = obj(title=S, points=array(S), notes=S, question_ids=array(S), reference_ids=array(S))

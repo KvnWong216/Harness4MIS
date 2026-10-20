@@ -45,6 +45,8 @@ class FakeProvider:
         if label.startswith('slides-'):
             return {'slides': [{'title': '等量关系', 'points': ['两个相同的量相加，结果为两倍。'],
                                'notes': '依据定义解释。', 'question_ids': ['1', '2'], 'reference_ids': []}]}
+        if '-review-plan-' in label:
+            return {'directions': [{'focus': '段落', 'reason': '原稿的适用条件可以更清楚', 'prompt': '明确本题等量条件并关联结论。'}]}
         for q in PROBLEM['questions']:
             if label.startswith(Runner.safe_id(q)):
                 result = answer(q['id'])
@@ -193,3 +195,44 @@ class StorageAndProviderTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class WordReportTests(unittest.TestCase):
+    def test_repeated_part_stages_are_selected_without_other_part(self):
+        from harness.word_format import select_part
+        text='Assign-5-Part1 第一阶段\n要求甲\nAssign-5-Part2\n要求乙\nAssign-5-Part1 第二阶段\n要求丙'
+        chosen=select_part(text, '1')
+        self.assertIn('要求甲',chosen); self.assertIn('要求丙',chosen); self.assertNotIn('要求乙',chosen)
+        with self.assertRaises(ValueError): select_part(text,'3')
+    def test_prompt_markup_becomes_native_word_and_survives_save(self):
+        from harness.exports import new_document
+        from harness.word_format import markdown,heading,paragraph
+        from docx import Document
+        from docx.oxml.ns import qn
+        with tempfile.TemporaryDirectory() as tmp:
+            d=new_document();heading(d,'研究要求',1);heading(d,'任务',2)
+            markdown(d,'# Role\n采用**真实资料**与*条件分析*，保留 [原论文](https://example.com/paper)。')
+            p=paragraph(d.add_paragraph('中文 body'))
+            file=Path(tmp)/'report.docx';d.save(file);saved=Document(file)
+            self.assertEqual(saved.paragraphs[0].text,'一、研究要求')
+            self.assertEqual(saved.paragraphs[1].text,'（一）任务')
+            body=saved.paragraphs[-2]
+            self.assertTrue(any(x.text=='真实资料' and x.bold for x in body.runs))
+            self.assertTrue(any(x.text=='条件分析' and x.italic for x in body.runs))
+            self.assertNotIn('**',body.text)
+            self.assertEqual(saved.paragraphs[-1]._p.pPr.ind.get(qn('w:firstLineChars')),'200')
+            self.assertEqual(saved.styles['Normal'].element.rPr.rFonts.get(qn('w:eastAsia')),'仿宋')
+    def test_review_plan_precedes_changes_and_has_previous_context(self):
+        runner=self.make_runner() if hasattr(self,'make_runner') else None
+        # Flow ordering and substantive reasons are checked with the pipeline fixture below.
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)
+            write_json(path/'state.json', {'id':'b'*32,'started_at':now(),'status':'queued','config':{},'metadata':{},'files':[], 'steps':{},'events':[],'timings':[],'feedback':'','model_calls':[],'answers':[],'questions':[]})
+            FakeProvider.calls=[]
+            run=Runner(path,provider_factory=FakeProvider,exporter=lambda *args: {})
+            run.execute()
+            self.assertEqual(run.state['status'],'completed')
+            qid=Runner.safe_id(PROBLEM['questions'][0])
+            self.assertLess(FakeProvider.calls.index(qid+'-review-plan-1'),FakeProvider.calls.index(qid+'-revision-1'))
+            self.assertLess(FakeProvider.calls.index(qid+'-revision-1'),FakeProvider.calls.index(qid+'-review-plan-2'))
+            self.assertIn('适用条件',run.state['steps']['revision2-'+qid]['review_plan']['directions'][0]['reason'])

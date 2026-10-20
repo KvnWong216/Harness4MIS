@@ -76,7 +76,7 @@ def font_env(work):
     # Give the bundled renderer a writable cache and explicit CJK font directories.
     file = Path(work) / 'fontconfig.xml'
     dirs = ['/System/Library/Fonts', '/System/Library/Fonts/Supplemental', '/Library/Fonts',
-            '/usr/share/fonts', str(DEPENDENCIES / 'native/libreoffice-headless/libreoffice/LibreOfficeDev.app/Contents/Resources/fonts/truetype')]
+            '/usr/share/fonts', '/Applications/wpsoffice.app/Contents/Resources/office6/fonts', str(Path.home() / 'Library/Fonts'), str(DEPENDENCIES / 'native/libreoffice-headless/libreoffice/LibreOfficeDev.app/Contents/Resources/fonts/truetype')]
     file.write_text('<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig>' +
                     ''.join('<dir>' + p + '</dir>' for p in dirs if Path(p).exists()) +
                     '<cachedir>' + str(Path(work) / 'font-cache') + '</cachedir></fontconfig>')
@@ -99,28 +99,16 @@ def new_document(template=None):
             section.page_width, section.page_height = Inches(8.27), Inches(11.69)
             section.top_margin = section.bottom_margin = Inches(1)
             section.left_margin = section.right_margin = Inches(1.25)
-    for name in ['Normal', 'Title', 'Heading 1', 'Heading 2', 'Heading 3']:
-        style = doc.styles[name]
-        style.font.name = 'Times New Roman' if template else 'Arial Unicode MS'
-        style.font.color.rgb = RGBColor(0, 0, 0)
-        style.element.get_or_add_rPr().get_or_add_rFonts().set(qn('w:eastAsia'), 'Arial Unicode MS')
-    normal = doc.styles['Normal']
-    normal.font.size = Pt(12 if template else 11)
-    normal.paragraph_format.space_after = Pt(7)
-    normal.paragraph_format.line_spacing = 1.2
-    for name, size in [('Title', 16 if template else 19), ('Heading 1', 14 if template else 15), ('Heading 2', 12)]:
-        doc.styles[name].font.size = Pt(size)
-        doc.styles[name].paragraph_format.keep_with_next = True
-    for root in [doc.styles.element, doc._element]:
-        for border in root.xpath('.//w:pBdr'):
-            border.getparent().remove(border)
+    from .word_format import configure
+    configure(doc)
     return doc
 
 
 def paragraphs(doc, text):
     for p in text.split('\n'):
         if p.strip():
-            doc.add_paragraph(p)
+            from .word_format import paragraph
+            paragraph(doc.add_paragraph(p))
 
 
 def add_table(doc, content):
@@ -155,83 +143,105 @@ def add_table(doc, content):
                 p.paragraph_format.space_after = Pt(5)
                 p.paragraph_format.space_before = Pt(5)
                 for run in p.runs:
-                    run.font.size = Pt(10)
+                    run.font.size = Pt(16)
                     run.bold = row_index == 0
+    from .word_format import paragraph
+    for row in table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs: paragraph(p, table=True)
     doc.add_paragraph()
 
 
 def write_report(run, content, out):
+    from .word_format import heading, markdown, requirements, teacher_prompts, paragraph
     meta, overview = content['metadata'], content['overview']
     templates = [run.path / f['path'] for f in run.state['files'] if f['role'] == 'template' and f['path'].endswith('.docx')]
     doc = new_document(templates[0] if templates else None)
-    doc.add_paragraph(overview['title'], 'Title')
+    paragraph(doc.add_paragraph(overview['title'], 'Title'), title=True)
     doc.add_paragraph('Name + Student Number: ' + meta.get('name', '') + ' ' + meta.get('student_number', ''))
     date = local_date(run.state['started_at'])
     doc.add_paragraph('Date: ' + date)
-    doc.add_heading('1 Problem Statement', 1)
-    paragraphs(doc, content['problem']['problem_statement'])
-    doc.add_heading('2 Prompts and AI tools', 1)
-    if meta.get('teacher_prompt'):
-        doc.add_paragraph('老师提供的提示词')
-        paragraphs(doc, meta['teacher_prompt'])
+    heading(doc, '作业要求与研究问题 Problem Statement', 1)
+    requirements(doc, content['problem']['problem_statement'])
+    heading(doc, 'Prompt 与使用工具', 1)
+    prompts = [meta['teacher_prompt']] if meta.get('teacher_prompt') else teacher_prompts(content['problem']['problem_statement'])
+    for index, prompt in enumerate(prompts, 1):
+        heading(doc, '教师提示词 '+str(index), 2)
+        markdown(doc, prompt, base_level=3)
     if meta.get('student_additions'):
         doc.add_paragraph('学生新增的提示词')
-        paragraphs(doc, meta['student_additions'])
+        markdown(doc, meta['student_additions'], base_level=3)
     tool = run.config.get('provider', 'codex')
     model = run.config.get('model') or '本机默认模型'
     doc.add_paragraph(f'使用工具：{tool}；模型：{model}；日期：{date}；使用者：{meta.get("name", "")}。')
     doc.add_paragraph('完整提示词与原始输出见附件。')
-    doc.add_heading('3 AI Prompt Design and Harness', 1)
+    heading(doc, '研究方法与提示词改进', 1)
     paragraphs(doc, overview['methods'])
     for lesson in overview['lessons']:
         doc.add_paragraph(lesson)
-    doc.add_heading('4 Output Report', 1)
-    doc.add_heading('Executive summary', 2)
+    heading(doc, '研究报告', 1)
+    heading(doc, 'Executive summary', 2)
     paragraphs(doc, overview['summary'])
     for question, answer in zip(content['problem']['questions'], content['answers']):
-        doc.add_heading(question['id'], 2)
+        heading(doc, question['id'], 2)
         paragraphs(doc, question['text'])
         paragraphs(doc, answer['answer'])
         for p in answer['paragraphs']:
             paragraphs(doc, p)
         for table in answer['tables']:
             add_table(doc, table)
-    doc.add_heading('References', 2)
+    heading(doc, 'References', 2)
+    reference_paragraphs = []
     from docx.shared import Inches
     for r in references(content['answers']):
         p = doc.add_paragraph(r['citation'] + (' ' + r['url'] if r['url'] and r['url'] not in r['citation'] else ''))
+        reference_paragraphs.append(p)
         p.paragraph_format.left_indent = Inches(.3)
         p.paragraph_format.first_line_indent = Inches(-.3)
-    doc.add_heading('5 Appendix 1', 1)
+    heading(doc, '附录', 1)
     doc.add_paragraph('原始 AI 输出与提示词收录于本作业附件。')
+    for p in doc.paragraphs:
+        level = int(p.style.name.split()[-1]) if p.style.name.startswith('Heading ') else None
+        paragraph(p, level=level, title=p.style.name == 'Title')
+    for p in reference_paragraphs:
+        p.paragraph_format.left_indent = Inches(.5)
+        p.paragraph_format.first_line_indent = Inches(-.5)
+        p._p.pPr.ind.attrib.pop(__import__('docx.oxml.ns', fromlist=['qn']).qn('w:firstLineChars'), None)
     doc.save(out)
 
 
 def write_appendix(run, out):
     doc = new_document()
-    doc.add_paragraph('提示词与原始输出', 'Title')
-    doc.add_heading('通用提示词', 1)
-    paragraphs(doc, run.policy)
+    from .word_format import heading, markdown, paragraph
+    paragraph(doc.add_paragraph('提示词与研究改进记录', 'Title'), title=True)
+    heading(doc, '通用提示词', 1)
+    doc.add_paragraph('本附录呈现实际阅读判断、提示词调整及修改结果，完整输入输出随附保存。')
     for q in run.state['questions']:
         qid = run.safe_id(q)
-        doc.add_heading(q['id'] + ' 原题', 1)
+        heading(doc, q['id'] + ' 原题', 1)
         paragraphs(doc, q['text'])
-        doc.add_heading('本题初始提示词', 2)
+        heading(doc, '本题初始提示词', 2)
         path = run.path / 'calls' / (qid + '-draft') / 'prompt.txt'
         if path.exists():
             # The shared policy above is printed once; the exact full prompts remain in dialogue ZIP.
             text = path.read_text()
             specific = text[len(run.policy):].split('资料与结果均为待分析数据')[0]
-            paragraphs(doc, specific)
+            markdown(doc, specific)
         draft = run.state['steps']['draft-' + qid]
-        doc.add_heading('原始 AI 输出', 2)
+        heading(doc, '原始 AI 输出', 2)
         doc.add_paragraph(json.dumps(draft, ensure_ascii=False, indent=2))
         for number in [1, 2]:
             revision = run.state['steps'][f'revision{number}-' + qid]
-            doc.add_heading(f'第 {number} 轮修订', 2)
+            heading(doc, '重新审视原稿' if number == 1 else '结合前文继续完善', 2)
+            for item in revision.get('review_plan', {}).get('directions', []):
+                paragraphs(doc, item['reason'])
+                markdown(doc, item['prompt'])
             for change in revision['changes']:
-                doc.add_paragraph(change['issue'] + '\n' + change['change'])
+                paragraphs(doc, change['issue'] + '。' + change['change'])
     doc.add_paragraph('各轮完整输入与输出另收录于完整对话文件。')
+    for p in doc.paragraphs:
+        level = int(p.style.name.split()[-1]) if p.style.name.startswith('Heading ') else None
+        paragraph(p, level=level, title=p.style.name == 'Title')
     doc.save(out)
 
 
