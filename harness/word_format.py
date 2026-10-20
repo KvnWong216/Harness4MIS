@@ -60,6 +60,7 @@ def heading(doc, text, level=1):
     counts[level-1]+=1
     for i in range(level,5): counts[i]=0
     n=counts[level-1]
+    text=re.sub(r'^[一二三四五六七八九十]+之[一二三四五六七八九十]+[：:]\s*', '', text)
     text=re.sub(r'^\s*(?:[一二三四五六七八九十]+、|（[一二三四五六七八九十]+）|\d+[.、]\s*|（\d+）|[①②③④⑤⑥⑦⑧⑨⑩])\s*','',text)
     prefix={1:chinese(n)+'、',2:'（'+chinese(n)+'）',3:str(n)+'.',4:'（'+str(n)+'）',5:chr(0x2460+n-1)}[level]
     return paragraph(doc.add_paragraph(prefix+text, 'Heading '+str(level)), level=level)

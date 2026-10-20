@@ -211,11 +211,13 @@ class WordReportTests(unittest.TestCase):
         from docx.oxml.ns import qn
         with tempfile.TemporaryDirectory() as tmp:
             d=new_document();heading(d,'研究要求',1);heading(d,'任务',2)
+            heading(d,'二之二：服务安排',3)
             markdown(d,'# Role\n采用**真实资料**与*条件分析*，保留 [原论文](https://example.com/paper)。')
             p=paragraph(d.add_paragraph('中文 body'))
             file=Path(tmp)/'report.docx';d.save(file);saved=Document(file)
             self.assertEqual(saved.paragraphs[0].text,'一、研究要求')
             self.assertEqual(saved.paragraphs[1].text,'（一）任务')
+            self.assertEqual(saved.paragraphs[2].text,'1.服务安排')
             body=saved.paragraphs[-2]
             self.assertTrue(any(x.text=='真实资料' and x.bold for x in body.runs))
             self.assertTrue(any(x.text=='条件分析' and x.italic for x in body.runs))
