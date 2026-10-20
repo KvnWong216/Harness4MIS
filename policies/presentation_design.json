@@ -1,0 +1,13 @@
+{
+  "purpose": "将研究内容编排为可用于课堂路演的可编辑演示文稿",
+  "reference": "https://pitch.com/templates/10-Slide-Pitch-Deck-0dh4WE6siodH4gWAjk0og4tB",
+  "canvas": "16:9",
+  "story": ["按本题要求保留问题与提示词设计", "每页围绕一个具体问题或发现", "用实际改动呈现研究推进", "用具体场景连接管理建议"],
+  "typography": {"title_px": 46, "hero_title_px": 68, "body_px": [24, 39], "source_px": 16, "chinese": "Arial Unicode MS", "latin": "Times New Roman"},
+  "composition": ["大标题与整幅图像", "深浅页面交替", "平面排版与充分留白", "原生任务路径图", "原生比较表", "实际问题与修改结果对照"],
+  "assets": ["优先选择与当次情景有关的图片", "自生成图片在备注说明身份", "原始来源与插图出处写入相关页备注", "通用研究桌面图仅作背景", "生成图片和数据表承担不同作用"],
+  "review": ["逐页渲染并阅读", "检查标题、对比、图片裁切和文字大小", "检查整套的版式变化与叙事推进", "核对数据、管理建议及来源", "检查表格和路径图可以编辑", "根据实际页面修改后再次检查"],
+  "minimum_layout_types_for_six_slides": 3,
+  "maximum_consecutive_same_content_layout": 2,
+  "default_visible_text_limit": 200
+}

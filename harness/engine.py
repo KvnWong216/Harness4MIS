@@ -240,7 +240,7 @@ class Runner:
                 self.state['answers'] = answers
                 self.save()
             overview = self.step('overview', '整理摘要与方法说明', lambda: self.call('overview',
-                '根据最终逐题答案写标题、执行摘要、自然简短的方法说明与 1—3 条实际提示词经验。'
+                '根据最终逐题答案写标题（不超过18个汉字）、执行摘要、自然简短的方法说明与 1—3 条实际提示词经验。'
                 '不加入新事实、新理论或新数字，不夸大方法效果，不冒称学生做过 AI 实际完成的工作。'
                 'methods 写成适合报告的自然段落。', schemas.OVERVIEW,
                 {'answers': answers, 'questions': ocr['questions'], 'student_ideas': self.state['metadata'].get('student_ideas', ''),
@@ -319,7 +319,9 @@ class Runner:
             result = self.call('slides-' + str(n),
                 '仅为修订后的逐题分析生成内容页。程序另行添加封面、完整题目和参考文献页。'
                 'content_slide_count 非零时严格返回该数量的内容页。每题在 question_ids 中对应，'
-                '每页不超过 6 个要点，每点不超过 160 字符，长内容拆页。'
+                '每页围绕一个具体问题或发现，最多3个要点，屏幕正文合计尽量控制在120字符内。'
+                '把充分解释、例子和APA引用写入演讲备注，长内容拆页。'
+                '标题直接指明主题或发现，表格用于比较、关系图用于解释依赖，采用自然路演语言。'
                 '所有数字、事实、结论和引用必须来自最终报告；不要添加页码、序号或报告没有的量化数字。'
                 'title 简短，points 适合口头汇报，notes 保留必要的解释与条件。', schemas.SLIDES, context)
             errors = check_slides(result['slides'], ocr['questions'], answers)

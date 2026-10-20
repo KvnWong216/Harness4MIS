@@ -64,3 +64,6 @@ https://developers.openai.com/api/docs/guides/images-vision
 
 OpenAI 网页检索
 https://developers.openai.com/api/docs/guides/tools-web-search
+
+PPT 配图与路演设计
+上传区可单独选择PPT配图。图像应贴合本次题目；相关案例材料与用于画面的插图分开选择。系统默认采用大标题、图片、深浅配色、原生表格和内容对照，并将详细说明与来源放在备注。每次完成后会逐页阅读实际文件的文字、对比、裁切与内容。

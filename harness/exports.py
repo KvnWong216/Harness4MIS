@@ -295,7 +295,13 @@ def export_all(directory, content, run):
     required = meta.get('slide_count') or content['problem']['slide_count']
     if required and len(deck) != required:
         raise RuntimeError('PPT 总页数与题目要求不一致。')
-    write_json(build / 'deck.json', deck)
+    from .presentation_design import make_design, design_issues
+    visuals = [directory / f['path'] for f in run.state['files'] if f['role'] == 'visual']
+    designed = make_design(deck, visuals)
+    problems = design_issues(designed)
+    if problems:
+        raise RuntimeError('；'.join(problems))
+    write_json(build / 'deck.json', designed)
     command([runtime('node'), ROOT / 'render_slides.mjs', build / 'deck.json', ppt, slides,
              DEPENDENCIES / 'node/node_modules', sys.executable], directory, timeout=360, env=env)
     # Read every generated page in small batches before exposing downloads.
@@ -304,6 +310,7 @@ def export_all(directory, content, run):
         for start in range(0, len(images), 6):
             result = run.call(f'visual-{folder}-{start}',
                 '只检查这些最终文件页面的可读性和排版：中文字形、溢出、重叠、缺行、过小文字、表格截断。'
+                'PPT同时检查标题是否醒目、图像与文字对比、画面留白、连续页面是否过于重复、图表是否易于理解。'
                 '不要评价附录原始输出的写作风格，不把正常分页或原题长文本视为缺陷。'
                 '实际影响阅读时 acceptable=false 并说明具体页面和问题。',
                 __import__('harness.schemas', fromlist=['VISUAL']).VISUAL, images=images[start:start+6])

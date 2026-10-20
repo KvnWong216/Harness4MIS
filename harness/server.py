@@ -49,11 +49,11 @@ class Manager:
             raise ValueError('每次最多上传 30 个文件。')
         for i, item in enumerate(files):
             role = item.get('role')
-            if role not in ('question', 'material', 'template'):
+            if role not in ('question', 'material', 'template', 'visual'):
                 raise ValueError('文件用途无效')
             name = safe_name(item.get('name', 'file'))
             suffix = Path(name).suffix.lower()
-            if suffix not in SUPPORTED or role == 'question' and suffix not in IMAGES:
+            if suffix not in SUPPORTED or role in ('question', 'visual') and suffix not in IMAGES:
                 raise ValueError('题目请上传 PNG、JPG 或 WebP；材料支持 DOCX、PDF、XLSX、文本与图片。')
             raw = base64.b64decode(item.get('data', ''), validate=True)
             size += len(raw)

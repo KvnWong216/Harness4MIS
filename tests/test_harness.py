@@ -238,3 +238,28 @@ class WordReportTests(unittest.TestCase):
             self.assertLess(FakeProvider.calls.index(qid+'-review-plan-1'),FakeProvider.calls.index(qid+'-revision-1'))
             self.assertLess(FakeProvider.calls.index(qid+'-revision-1'),FakeProvider.calls.index(qid+'-review-plan-2'))
             self.assertIn('适用条件',run.state['steps']['revision2-'+qid]['review_plan']['directions'][0]['reason'])
+
+
+class PresentationDesignTests(unittest.TestCase):
+    def test_composition_keeps_content_and_varies_layouts(self):
+        from harness.presentation_design import make_design,design_issues
+        slides=[{'kind':'cover','title':'研究','text':'姓名','notes':''}]+[
+            {'kind':'points','title':'分析'+str(i),'points':['前提甲','结论乙'],'notes':'解释条件'} for i in range(6)]
+        result=make_design(slides)
+        self.assertEqual(design_issues(result),[])
+        self.assertEqual([s['title'] for s in result['slides']],[s['title'] for s in slides])
+        for old,new in zip(slides[1:],result['slides'][1:]):self.assertEqual(old['points'],new['points'])
+        self.assertTrue(Path(result['slides'][0]['image']).is_file())
+        self.assertEqual(result['slides'][3]['layout'],'split')
+    def test_plain_repetitive_deck_and_overdense_points_are_flagged(self):
+        from harness.presentation_design import design_issues
+        deck={'slides':[{'layout':'points','points':['字'*220]} for i in range(6)]}
+        problems=design_issues(deck)
+        self.assertTrue(any('版式' in x for x in problems));self.assertTrue(any('文字过多' in x for x in problems))
+    def test_visual_upload_is_separate_from_materials_and_requires_image(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manager=Manager(Path(tmp))
+            path=Path(tmp)/'task';path.mkdir()
+            files=manager.upload(path,[{'role':'visual','name':'illustration.png','data':base64.b64encode(b'image bytes').decode()}])
+            self.assertEqual(files[0]['role'],'visual')
+            with self.assertRaises(ValueError):manager.upload(path,[{'role':'visual','name':'paper.pdf','data':base64.b64encode(b'pdf').decode()}])
