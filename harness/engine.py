@@ -12,6 +12,7 @@ from .common import ROOT, now, read_json, write_json
 from . import schemas
 from .materials import extract, chunk_text, select
 from .provider import Provider, Cancelled
+from .case_framework import case_guidance
 from .quality import check_answer, check_slides, body, style_errors, count_words, time_classification, norm
 
 
@@ -136,6 +137,7 @@ class Runner:
 
     def revised(self, question, chunks, old, round_number):
         context = {'question': question, 'answer_to_review': old,
+                   'case_writing': case_guidance(question['text']),
                    'source_passages': chunks, 'previous_checks': check_answer(old, question, chunks, self.web,
                                                        self.config.get('web_search', False))}
         previous = self.state['steps'].get('revision1-' + self.safe_id(question), {}) if round_number == 2 else {}
@@ -145,6 +147,8 @@ class Runner:
             lambda: self.call(f'{self.safe_id(question)}-review-plan-{round_number}',
                 '阅读当前原稿，找出最值得改进的具体段落或观点。先解释为什么值得调整，再写用于修改该处的提示词。'
                 '依据当前文本自主选择重点；结合已有修改继续深入，避免重复已解决的问题。'
+                '当case_writing有内容时，结合其中的经营主线、成因与对策、段落关系及图表用途，选择最值得改善的一处；'
+                '短题保持聚焦，完整报告再检查各部分之间的联系。'
                 '自然描述研究者如何改善语言、资料和观点；以AI辅助建议的身份记录。没有实质问题可返回空 directions。',
                 schemas.REVIEW_PLAN, context))
         context['review_plan'] = plan
@@ -227,6 +231,7 @@ class Runner:
                         '从网页研究获取的外部来源给出真实 URL 和原文，不使用编造的来源。'
                         '不要在正文写制作过程或内部记录。按全题字数要求合理分配本题篇幅。', schemas.ANSWER,
                         {'question': q, 'all_questions': ocr['questions'], 'requirements': ocr,
+                         'case_writing': case_guidance(q['text']),
                          'preceding_answers': list(answers), 'source_passages': s, 'teacher_prompt': self.state['metadata'].get('teacher_prompt', '')},
                         search=self.config.get('web_search', False)))
                 first = self.step('revision1-' + qid, '重新审视原稿 ' + question['id'],

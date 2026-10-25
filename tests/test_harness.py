@@ -263,3 +263,32 @@ class PresentationDesignTests(unittest.TestCase):
             files=manager.upload(path,[{'role':'visual','name':'illustration.png','data':base64.b64encode(b'image bytes').decode()}])
             self.assertEqual(files[0]['role'],'visual')
             with self.assertRaises(ValueError):manager.upload(path,[{'role':'visual','name':'paper.pdf','data':base64.b64encode(b'pdf').decode()}])
+
+
+class CaseFrameworkTests(unittest.TestCase):
+    def test_full_business_report_gets_connected_structure(self):
+        from harness.case_framework import case_guidance
+        guide=case_guidance('根据经营痛点，梳理商业模式分析报告，并应用BMC。')
+        self.assertEqual(guide['kind'],'comprehensive_business_case')
+        self.assertEqual(guide['body_route'][0]['part'],'执行摘要')
+        self.assertIn('主要矛盾及相互影响',[s['part'] for s in guide['body_route']])
+        self.assertEqual(guide['question_named_frameworks'],['BMC'])
+    def test_focused_question_does_not_force_company_history(self):
+        from harness.case_framework import case_guidance
+        guide=case_guidance('针对企业痛点，给出两项管理实践建议。')
+        self.assertEqual(guide['kind'],'focused_business_answer')
+        self.assertEqual(len(guide['body_route']),3)
+        self.assertNotIn('问题背景与研究对象',[s['part'] for s in guide['body_route']])
+    def test_unrelated_questions_and_unrequested_theory_stay_separate(self):
+        from harness.case_framework import case_guidance
+        self.assertEqual(case_guidance('说明两个等量相加的结果。'),{})
+        self.assertEqual(case_guidance('分析经营痛点。')['question_named_frameworks'],[])
+        self.assertEqual(case_guidance('运用PIS分析企业经营痛点。')['question_named_frameworks'],['PIS'])
+    def test_generic_policy_keeps_case_facts_out_and_explains_visual_roles(self):
+        from harness.case_framework import case_guidance
+        guide=case_guidance('写一份商业模式分析报告。')
+        text=json.dumps(guide,ensure_ascii=False)
+        for case in ['爱长伴','康颐云视','守护员','NIKE','华为']:
+            self.assertNotIn(case,text)
+        self.assertTrue(any('结果回到何处' in line for line in guide['visual_focus']))
+        self.assertTrue(any('相互影响' in line for line in guide['argument_focus']))
