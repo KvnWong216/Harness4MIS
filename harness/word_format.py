@@ -93,7 +93,7 @@ def markdown(doc, text, base_level=2):
         else:
             p=doc.add_paragraph();inline(p,line);paragraph(p)
 
-PART_RE=re.compile(r'(?im)^.*?(?:Assign[^\n]*?[- ]|^)(Part\s*[- ]?\d+)[^\n]*$')
+PART_RE=re.compile(r'(?im)^\s*(?:(?:GroupProject[^\n]*?-)?Assign[^\n]*?[- ])?(Part\s*[- ]?\d+)[^\n]*$')
 def part_key(value):
     m=re.search(r'(?:part\s*[- ]?)?(\d+)',str(value),re.I)
     return m[1] if m else ''

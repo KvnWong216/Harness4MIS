@@ -198,6 +198,12 @@ if __name__=='__main__':unittest.main()
 
 
 class WordReportTests(unittest.TestCase):
+    def test_part_reference_in_material_sentence_is_not_a_boundary(self):
+        from harness.word_format import select_part
+        text='GroupProject1-Assign6-Part1-作业\n准备上传“附件3-Assign-5-Part2-作业”作为材料。\n本题养老分析。\nAssign6-Part2-作业\n本题运动鞋服。'
+        self.assertIn('本题养老分析',select_part(text,1))
+        self.assertNotIn('本题养老分析',select_part(text,2))
+        self.assertNotIn('准备上传',select_part(text,2))
     def test_repeated_part_stages_are_selected_without_other_part(self):
         from harness.word_format import select_part
         text='Assign-5-Part1 第一阶段\n要求甲\nAssign-5-Part2\n要求乙\nAssign-5-Part1 第二阶段\n要求丙'
